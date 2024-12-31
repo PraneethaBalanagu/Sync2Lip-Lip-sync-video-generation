@@ -5,11 +5,40 @@ from pydub import AudioSegment
 from pydub.silence import detect_silence
 from torchvision import transforms
 from torch.utils.data import DataLoader
-from utils.inference_utils import boost_audio, detect_silence_pydub
-
-# Other necessary imports
+from spleeter.separator import Separator
 from models.dinet import DINet
 from datasets.video_dataset import VideoDataset
+from utils.inference_utils import boost_audio, detect_silence_pydub
+
+# Assuming the required packages are already imported
+
+def separate_speech_and_noise(audio_path):
+    """
+    Separates speech from background noise or music using Spleeter.
+    This function will separate the input audio into vocals and accompaniment.
+
+    Args:
+    - audio_path: Path to the audio file
+
+    Returns:
+    - speech_audio: Tensor of speech audio (isolated)
+    - noise_audio: Tensor of background noise or music (isolated)
+    """
+    # Initialize Spleeter with the 2stems model (vocals and accompaniment)
+    separator = Separator('spleeter:2stems')  # Using the 2 stems model for vocals + accompaniment separation
+
+    # Perform the separation
+    separator.separate(audio_path)
+
+    # Load the separated tracks (vocals and accompaniment)
+    vocals_path = audio_path.replace('.wav', '/vocals.wav')
+    accompaniment_path = audio_path.replace('.wav', '/accompaniment.wav')
+
+    # Load the separated audio files
+    speech_waveform, sample_rate = torchaudio.load(vocals_path)
+    noise_waveform, _ = torchaudio.load(accompaniment_path)
+
+    return speech_waveform, noise_waveform
 
 # Initialize model and options
 model = DINet().to('cuda')
@@ -27,6 +56,9 @@ opt = {
 print('Boosting and detecting silence in driving audio')
 boosted_audio = boost_audio(opt['driving_audio_path'])
 absolute_silences = detect_silence_pydub(boosted_audio)
+
+# Separate speech and background noise/music using Spleeter
+speech_audio, noise_audio = separate_speech_and_noise(opt['driving_audio_path'])
 
 # Data transformations
 transform = transforms.Compose([
@@ -68,7 +100,7 @@ for clip_idx, (crop_frame_tensor, ref_img_tensor, deepspeech_tensor) in enumerat
             silent_speech_tensor if is_silence else deepspeech_tensor
         )
 
-    # Save or process `pre_frame` as needed
+    # Save or process pre_frame as needed
     # For example, save it as a frame in the output video
     # Your saving logic goes here
 
