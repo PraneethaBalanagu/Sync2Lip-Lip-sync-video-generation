@@ -212,12 +212,12 @@ class AdaAT(nn.Module):
         return trans_feature
 
 class DINet(nn.Module):
-    def _init_(self, source_channel, ref_channel, audio_channel):
-        super(DINet, self)._init_()
+    def __init__(self, source_channel,ref_channel,audio_channel):
+        super(DINet, self).__init__()
         self.source_in_conv = nn.Sequential(
-            SameBlock2d(source_channel, 64, kernel_size=7, padding=3),
+            SameBlock2d(source_channel,64,kernel_size=7, padding=3),
             DownBlock2d(64, 128, kernel_size=3, padding=1),
-            DownBlock2d(128, 256, kernel_size=3, padding=1)
+            DownBlock2d(128,256,kernel_size=3, padding=1)
         )
         self.ref_in_conv = nn.Sequential(
             SameBlock2d(ref_channel, 64, kernel_size=7, padding=3),
@@ -225,17 +225,22 @@ class DINet(nn.Module):
             DownBlock2d(128, 256, kernel_size=3, padding=1),
         )
         self.trans_conv = nn.Sequential(
+            # 20 →10
             SameBlock2d(512, 128, kernel_size=3, padding=1),
             SameBlock2d(128, 128, kernel_size=11, padding=5),
             SameBlock2d(128, 128, kernel_size=11, padding=5),
             DownBlock2d(128, 128, kernel_size=3, padding=1),
+            # 10 →5
             SameBlock2d(128, 128, kernel_size=7, padding=3),
             SameBlock2d(128, 128, kernel_size=7, padding=3),
             DownBlock2d(128, 128, kernel_size=3, padding=1),
+            # 5 →3
             SameBlock2d(128, 128, kernel_size=3, padding=1),
             DownBlock2d(128, 128, kernel_size=3, padding=1),
+            # 3 →2
             SameBlock2d(128, 128, kernel_size=3, padding=1),
             DownBlock2d(128, 128, kernel_size=3, padding=1),
+
         )
         self.audio_encoder = nn.Sequential(
             SameBlock1d(audio_channel, 128, kernel_size=5, padding=2),
@@ -245,6 +250,7 @@ class DINet(nn.Module):
             DownBlock1d(128, 128, 3, 1),
             SameBlock1d(128, 128, kernel_size=3, padding=1)
         )
+
         appearance_conv_list = []
         for i in range(2):
             appearance_conv_list.append(
@@ -257,56 +263,36 @@ class DINet(nn.Module):
             )
         self.appearance_conv_list = nn.ModuleList(appearance_conv_list)
         self.adaAT = AdaAT(256, 256)
-        
-        # Output branches: one for RGB image, one for alpha mask
-        self.out_conv_img = nn.Sequential(
+        self.out_conv = nn.Sequential(
             SameBlock2d(512, 128, kernel_size=3, padding=1),
-            UpBlock2d(128, 128, kernel_size=3, padding=1),
+            UpBlock2d(128,128,kernel_size=3, padding=1),
             ResBlock2d(128, 128, 3, 1),
             UpBlock2d(128, 128, kernel_size=3, padding=1),
             nn.Conv2d(128, 3, kernel_size=(7, 7), padding=(3, 3)),
             nn.Sigmoid()
         )
-        self.out_conv_alpha = nn.Sequential(
-            SameBlock2d(512, 128, kernel_size=3, padding=1),
-            UpBlock2d(128, 128, kernel_size=3, padding=1),
-            ResBlock2d(128, 128, 3, 1),
-            UpBlock2d(128, 128, kernel_size=3, padding=1),
-            nn.Conv2d(128, 1, kernel_size=(7, 7), padding=(3, 3)),
-            nn.Sigmoid()
-        )
-        
         self.global_avg2d = nn.AdaptiveAvgPool2d(1)
         self.global_avg1d = nn.AdaptiveAvgPool1d(1)
-
-    def forward(self, source_img, ref_img, audio_feature):
-        # Source image encoder
+    def forward(self, source_img,ref_img,audio_feature):
+        ## source image encoder
         source_in_feature = self.source_in_conv(source_img)
-        
-        # Reference image encoder
+        ## reference image encoder
         ref_in_feature = self.ref_in_conv(ref_img)
-        
-        # Alignment encoder
-        img_para = self.trans_conv(torch.cat([source_in_feature, ref_in_feature], 1))
+        ## alignment encoder
+        img_para = self.trans_conv(torch.cat([source_in_feature,ref_in_feature],1))
         img_para = self.global_avg2d(img_para).squeeze(3).squeeze(2)
-        
-        # Audio encoder
+        ## audio encoder
         audio_para = self.audio_encoder(audio_feature)
         audio_para = self.global_avg1d(audio_para).squeeze(2)
-        
-        # Concatenate alignment feature and audio feature
-        trans_para = torch.cat([img_para, audio_para], 1)
-        
-        # Use AdaAT to do spatial deformation on reference feature maps
+        ## concat alignment feature and audio feature
+        trans_para = torch.cat([img_para,audio_para],1)
+        ## use AdaAT do spatial deformation on reference feature maps
         ref_trans_feature = self.appearance_conv_list[0](ref_in_feature)
         ref_trans_feature = self.adaAT(ref_trans_feature, trans_para)
         ref_trans_feature = self.appearance_conv_list[1](ref_trans_feature)
-        
-        # Feature decoder
-        merge_feature = torch.cat([source_in_feature, ref_trans_feature], 1)
-        dubbed_img = self.out_conv_img(merge_feature)
-        alpha_mask = self.out_conv_alpha(merge_feature)
-        
-        # Perform alpha blending
-        output_img = alpha_mask * dubbed_img + (1 - alpha_mask) * source_img
-        return output_img
+        ## feature decoder
+        merge_feature = torch.cat([source_in_feature,ref_trans_feature],1)
+        out = self.out_conv(merge_feature)
+        return out
+
+
