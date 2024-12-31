@@ -9,7 +9,7 @@ from sync_batchnorm import SynchronizedBatchNorm1d as BatchNorm1d
 
 def make_coordinate_grid_3d(spatial_size, type):
     '''
-        Generate 3D coordinate grid
+        generate 3D coordinate grid
     '''
     d, h, w = spatial_size
     x = torch.arange(w).type(type)
@@ -26,20 +26,21 @@ def make_coordinate_grid_3d(spatial_size, type):
 
 class ResBlock1d(nn.Module):
     '''
-        Basic block for 1D convolutions
+        basic block
     '''
-    def _init_(self, in_features, out_features, kernel_size, padding):
-        super(ResBlock1d, self)._init_()
+    def __init__(self, in_features,out_features, kernel_size, padding):
+        super(ResBlock1d, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.conv1 = nn.Conv1d(in_channels=in_features, out_channels=in_features, kernel_size=kernel_size, padding=padding)
-        self.conv2 = nn.Conv1d(in_channels=in_features, out_channels=out_features, kernel_size=kernel_size, padding=padding)
+        self.conv1 = nn.Conv1d(in_channels=in_features, out_channels=in_features, kernel_size=kernel_size,
+                               padding=padding)
+        self.conv2 = nn.Conv1d(in_channels=in_features, out_channels=out_features, kernel_size=kernel_size,
+                               padding=padding)
         if out_features != in_features:
-            self.channel_conv = nn.Conv1d(in_features, out_features, 1)
+            self.channel_conv = nn.Conv1d(in_features,out_features,1)
         self.norm1 = BatchNorm1d(in_features)
         self.norm2 = BatchNorm1d(in_features)
         self.relu = nn.ReLU()
-
     def forward(self, x):
         out = self.norm1(x)
         out = self.relu(out)
@@ -55,20 +56,21 @@ class ResBlock1d(nn.Module):
 
 class ResBlock2d(nn.Module):
     '''
-        Basic block for 2D convolutions
+            basic block
     '''
-    def _init_(self, in_features, out_features, kernel_size, padding):
-        super(ResBlock2d, self)._init_()
+    def __init__(self, in_features,out_features, kernel_size, padding):
+        super(ResBlock2d, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.conv1 = nn.Conv2d(in_channels=in_features, out_channels=in_features, kernel_size=kernel_size, padding=padding)
-        self.conv2 = nn.Conv2d(in_channels=in_features, out_channels=out_features, kernel_size=kernel_size, padding=padding)
+        self.conv1 = nn.Conv2d(in_channels=in_features, out_channels=in_features, kernel_size=kernel_size,
+                               padding=padding)
+        self.conv2 = nn.Conv2d(in_channels=in_features, out_channels=out_features, kernel_size=kernel_size,
+                               padding=padding)
         if out_features != in_features:
-            self.channel_conv = nn.Conv2d(in_features, out_features, 1)
+            self.channel_conv = nn.Conv2d(in_features,out_features,1)
         self.norm1 = BatchNorm2d(in_features)
         self.norm2 = BatchNorm2d(in_features)
         self.relu = nn.ReLU()
-
     def forward(self, x):
         out = self.norm1(x)
         out = self.relu(out)
@@ -84,14 +86,14 @@ class ResBlock2d(nn.Module):
 
 class UpBlock2d(nn.Module):
     '''
-        Upsample block for 2D convolutions
+            basic block
     '''
-    def _init_(self, in_features, out_features, kernel_size=3, padding=1):
-        super(UpBlock2d, self)._init_()
-        self.conv = nn.Conv2d(in_channels=in_features, out_channels=out_features, kernel_size=kernel_size, padding=padding)
+    def __init__(self, in_features, out_features, kernel_size=3, padding=1):
+        super(UpBlock2d, self).__init__()
+        self.conv = nn.Conv2d(in_channels=in_features, out_channels=out_features, kernel_size=kernel_size,
+                              padding=padding)
         self.norm = BatchNorm2d(out_features)
         self.relu = nn.ReLU()
-
     def forward(self, x):
         out = F.interpolate(x, scale_factor=2)
         out = self.conv(out)
@@ -101,14 +103,14 @@ class UpBlock2d(nn.Module):
 
 class DownBlock1d(nn.Module):
     '''
-        Downsample block for 1D convolutions
+            basic block
     '''
-    def _init_(self, in_features, out_features, kernel_size, padding):
-        super(DownBlock1d, self)._init_()
-        self.conv = nn.Conv1d(in_channels=in_features, out_channels=out_features, kernel_size=kernel_size, padding=padding, stride=2)
+    def __init__(self, in_features, out_features, kernel_size, padding):
+        super(DownBlock1d, self).__init__()
+        self.conv = nn.Conv1d(in_channels=in_features, out_channels=out_features, kernel_size=kernel_size,
+                              padding=padding,stride=2)
         self.norm = BatchNorm1d(out_features)
         self.relu = nn.ReLU()
-
     def forward(self, x):
         out = self.conv(x)
         out = self.norm(out)
@@ -117,14 +119,14 @@ class DownBlock1d(nn.Module):
 
 class DownBlock2d(nn.Module):
     '''
-        Downsample block for 2D convolutions
+            basic block
     '''
-    def _init_(self, in_features, out_features, kernel_size=3, padding=1, stride=2):
-        super(DownBlock2d, self)._init_()
-        self.conv = nn.Conv2d(in_channels=in_features, out_channels=out_features, kernel_size=kernel_size, padding=padding, stride=stride)
+    def __init__(self, in_features, out_features, kernel_size=3, padding=1, stride=2):
+        super(DownBlock2d, self).__init__()
+        self.conv = nn.Conv2d(in_channels=in_features, out_channels=out_features, kernel_size=kernel_size,
+                              padding=padding, stride=stride)
         self.norm = BatchNorm2d(out_features)
         self.relu = nn.ReLU()
-
     def forward(self, x):
         out = self.conv(x)
         out = self.norm(out)
@@ -133,14 +135,14 @@ class DownBlock2d(nn.Module):
 
 class SameBlock1d(nn.Module):
     '''
-        Same-sized block for 1D convolutions
+            basic block
     '''
-    def _init_(self, in_features, out_features, kernel_size, padding):
-        super(SameBlock1d, self)._init_()
-        self.conv = nn.Conv1d(in_channels=in_features, out_channels=out_features, kernel_size=kernel_size, padding=padding)
+    def __init__(self, in_features, out_features,  kernel_size, padding):
+        super(SameBlock1d, self).__init__()
+        self.conv = nn.Conv1d(in_channels=in_features, out_channels=out_features,
+                              kernel_size=kernel_size, padding=padding)
         self.norm = BatchNorm1d(out_features)
         self.relu = nn.ReLU()
-
     def forward(self, x):
         out = self.conv(x)
         out = self.norm(out)
@@ -149,14 +151,14 @@ class SameBlock1d(nn.Module):
 
 class SameBlock2d(nn.Module):
     '''
-        Same-sized block for 2D convolutions
+            basic block
     '''
-    def _init_(self, in_features, out_features, kernel_size=3, padding=1):
-        super(SameBlock2d, self)._init_()
-        self.conv = nn.Conv2d(in_channels=in_features, out_channels=out_features, kernel_size=kernel_size, padding=padding)
+    def __init__(self, in_features, out_features,  kernel_size=3, padding=1):
+        super(SameBlock2d, self).__init__()
+        self.conv = nn.Conv2d(in_channels=in_features, out_channels=out_features,
+                              kernel_size=kernel_size, padding=padding)
         self.norm = BatchNorm2d(out_features)
         self.relu = nn.ReLU()
-
     def forward(self, x):
         out = self.conv(x)
         out = self.norm(out)
@@ -165,10 +167,10 @@ class SameBlock2d(nn.Module):
 
 class AdaAT(nn.Module):
     '''
-       AdaAT operator for spatial transformations
+       AdaAT operator
     '''
-    def _init_(self, para_ch, feature_ch):
-        super(AdaAT, self)._init_()
+    def __init__(self,  para_ch,feature_ch):
+        super(AdaAT, self).__init__()
         self.para_ch = para_ch
         self.feature_ch = feature_ch
         self.commn_linear = nn.Sequential(
@@ -176,25 +178,25 @@ class AdaAT(nn.Module):
             nn.ReLU()
         )
         self.scale = nn.Sequential(
-            nn.Linear(para_ch, feature_ch),
-            nn.Sigmoid()
-        )
+                    nn.Linear(para_ch, feature_ch),
+                    nn.Sigmoid()
+                )
         self.rotation = nn.Sequential(
-            nn.Linear(para_ch, feature_ch),
-            nn.Tanh()
-        )
+                nn.Linear(para_ch, feature_ch),
+                nn.Tanh()
+            )
         self.translation = nn.Sequential(
-            nn.Linear(para_ch, 2 * feature_ch),
-            nn.Tanh()
-        )
+                nn.Linear(para_ch, 2 * feature_ch),
+                nn.Tanh()
+            )
         self.tanh = nn.Tanh()
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, feature_map, para_code):
-        batch, d, h, w = feature_map.size(0), feature_map.size(1), feature_map.size(2), feature_map.size(3)
+    def forward(self, feature_map,para_code):
+        batch,d, h, w = feature_map.size(0), feature_map.size(1), feature_map.size(2), feature_map.size(3)
         para_code = self.commn_linear(para_code)
         scale = self.scale(para_code).unsqueeze(-1) * 2
-        angle = self.rotation(para_code).unsqueeze(-1) * 3.14159
+        angle = self.rotation(para_code).unsqueeze(-1) * 3.14159#
         rotation_matrix = torch.cat([torch.cos(angle), -torch.sin(angle), torch.sin(angle), torch.cos(angle)], -1)
         rotation_matrix = rotation_matrix.view(batch, self.feature_ch, 2, 2)
         translation = self.translation(para_code).view(batch, self.feature_ch, 2)
@@ -210,33 +212,35 @@ class AdaAT(nn.Module):
         return trans_feature
 
 class DINet(nn.Module):
-    '''
-        Main LipSick model
-    '''
-    def _init_(self, source_channel, ref_channel, audio_channel):
-        super(DINet, self)._init_()
+    def __init__(self, source_channel,ref_channel,audio_channel):
+        super(DINet, self).__init__()
         self.source_in_conv = nn.Sequential(
-            SameBlock2d(source_channel, 64, kernel_size=7, padding=3),
+            SameBlock2d(source_channel,64,kernel_size=7, padding=3),
             DownBlock2d(64, 128, kernel_size=3, padding=1),
-            DownBlock2d(128, 256, kernel_size=3, padding=1)
+            DownBlock2d(128,256,kernel_size=3, padding=1)
         )
         self.ref_in_conv = nn.Sequential(
             SameBlock2d(ref_channel, 64, kernel_size=7, padding=3),
             DownBlock2d(64, 128, kernel_size=3, padding=1),
-            DownBlock2d(128, 256, kernel_size=3, padding=1)
+            DownBlock2d(128, 256, kernel_size=3, padding=1),
         )
         self.trans_conv = nn.Sequential(
+            # 20 →10
             SameBlock2d(512, 128, kernel_size=3, padding=1),
             SameBlock2d(128, 128, kernel_size=11, padding=5),
             SameBlock2d(128, 128, kernel_size=11, padding=5),
             DownBlock2d(128, 128, kernel_size=3, padding=1),
+            # 10 →5
             SameBlock2d(128, 128, kernel_size=7, padding=3),
             SameBlock2d(128, 128, kernel_size=7, padding=3),
             DownBlock2d(128, 128, kernel_size=3, padding=1),
+            # 5 →3
             SameBlock2d(128, 128, kernel_size=3, padding=1),
             DownBlock2d(128, 128, kernel_size=3, padding=1),
+            # 3 →2
             SameBlock2d(128, 128, kernel_size=3, padding=1),
-            DownBlock2d(128, 128, kernel_size=3, padding=1)
+            DownBlock2d(128, 128, kernel_size=3, padding=1),
+
         )
         self.audio_encoder = nn.Sequential(
             SameBlock1d(audio_channel, 128, kernel_size=5, padding=2),
@@ -254,14 +258,14 @@ class DINet(nn.Module):
                     ResBlock2d(256, 256, 3, 1),
                     ResBlock2d(256, 256, 3, 1),
                     ResBlock2d(256, 256, 3, 1),
-                    ResBlock2d(256, 256, 3, 1)
+                    ResBlock2d(256, 256, 3, 1),
                 )
             )
         self.appearance_conv_list = nn.ModuleList(appearance_conv_list)
         self.adaAT = AdaAT(256, 256)
         self.out_conv = nn.Sequential(
             SameBlock2d(512, 128, kernel_size=3, padding=1),
-            UpBlock2d(128, 128, kernel_size=3, padding=1),
+            UpBlock2d(128,128,kernel_size=3, padding=1),
             ResBlock2d(128, 128, 3, 1),
             UpBlock2d(128, 128, kernel_size=3, padding=1),
             nn.Conv2d(128, 3, kernel_size=(7, 7), padding=(3, 3)),
@@ -269,25 +273,26 @@ class DINet(nn.Module):
         )
         self.global_avg2d = nn.AdaptiveAvgPool2d(1)
         self.global_avg1d = nn.AdaptiveAvgPool1d(1)
-
-    def forward(self, source_img, ref_img, audio_feature):
-        ## Source image encoder
+    def forward(self, source_img,ref_img,audio_feature):
+        ## source image encoder
         source_in_feature = self.source_in_conv(source_img)
-        ## Reference image encoder
+        ## reference image encoder
         ref_in_feature = self.ref_in_conv(ref_img)
-        ## Alignment encoder
-        img_para = self.trans_conv(torch.cat([source_in_feature, ref_in_feature], 1))
+        ## alignment encoder
+        img_para = self.trans_conv(torch.cat([source_in_feature,ref_in_feature],1))
         img_para = self.global_avg2d(img_para).squeeze(3).squeeze(2)
-        ## Audio encoder
+        ## audio encoder
         audio_para = self.audio_encoder(audio_feature)
         audio_para = self.global_avg1d(audio_para).squeeze(2)
-        ## Concatenate alignment and audio features
-        trans_para = torch.cat([img_para, audio_para], 1)
-        ## Use AdaAT to deform the reference feature maps
+        ## concat alignment feature and audio feature
+        trans_para = torch.cat([img_para,audio_para],1)
+        ## use AdaAT do spatial deformation on reference feature maps
         ref_trans_feature = self.appearance_conv_list[0](ref_in_feature)
         ref_trans_feature = self.adaAT(ref_trans_feature, trans_para)
         ref_trans_feature = self.appearance_conv_list[1](ref_trans_feature)
-        ## Feature decoder
-        merge_feature = torch.cat([source_in_feature, ref_trans_feature], 1)
+        ## feature decoder
+        merge_feature = torch.cat([source_in_feature,ref_trans_feature],1)
         out = self.out_conv(merge_feature)
         return out
+
+
